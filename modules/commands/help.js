@@ -96,7 +96,7 @@ module.exports.run = function({ api, event, args, getText }) {
 
         for (let item of returnArray) msg += `「 ${++i} 」${prefix}${item}\n`;
 
-        const siu = `Here is the command list. For more info type $help (command name).\n\n${getText("randomFact", randomFact)}`;
+        const siu = `Here is the command list. For more info type $help (command name)\nthere are ${arrayInfo.length} commands on ${global.config.BOTNAME}.\n\n${getText("randomFact", randomFact)}`;
         const text = `\nPage (${page}/${Math.ceil(arrayInfo.length / numberOfOnePage)})\n`;
 
         return api.sendMessage(siu + "\n\n" + msg + text, threadID, async (error, info) => {
