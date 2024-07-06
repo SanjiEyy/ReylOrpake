@@ -1,40 +1,32 @@
-module.exports.config = {  
-  name: "shoti",  
-  version: "1.0.0",  
-  credits: "libyzxy0",  
-  description: "Generate random TikTok girl videos",  
-  hasPermssion: 0,  
-  commandCategory: "other",  
-  usage: "[shoti]",  
-  cooldowns: 5,  
-  dependencies: [],  
-};  
+const axios = require('axios');
 
-module.exports.run = async ({ api, event }) => {  
-  const axios = require("axios");  
-  const request = require("request");  
-  const fs = require("fs");  
+module.exports.config = {
+  name: 'shoti',
+  version: '1.0.0',
+  hasPermssion: 0,
+  credits: 'ChatGPT',
+  description: 'Fetches content from a TikTok downloader API.',
+  commandCategory: 'media',
+  usages: '',
+  cooldowns: 5,
+};
 
-  try {  
-    const response = await axios.get("https://www.jjohndev.xyz/tool/tiktok-downloader/");  
-    const videoUrl = response.data.data.url;  
-    const filePath = `${__dirname}/cache/shoti.mp4`;  
+module.exports.run = async function({ api, event }) {
+  const apiUrl = 'https://www.jjohndev.xyz/tool/tiktok-downloader/';
+  
+  try {
+    // Send a message indicating it's sending content
+    api.sendMessage('Sending babes 😘😚...', event.threadID, event.messageID);
 
-    console.log(`Downloading video ${videoUrl}...`);  
-
-    const file = fs.createWriteStream(filePath);  
-    const req = request(encodeURI(videoUrl));  
-
-    req.pipe(file);  
-
-    file.on("finish", () => {  
-      console.log("Video downloaded successfully!");  
-      api.sendMessage({  
-        body: "",  
-        attachment: fs.createReadStream(filePath),  
-      }, event.threadID, event.messageID);  
-    });  
-  } catch (error) {  
-    console.error("Error downloading video:", error);  
-  }  
-};  
+    // Make a request to the API (example using axios)
+    const response = await axios.get(apiUrl);
+    
+    // Handle the response (you can process or send the data here)
+    const data = response.data;
+    // Example: Send the received data
+    api.sendMessage(data, event.threadID);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    api.sendMessage('An error occurred while fetching data. Please try again later.', event.threadID, event.messageID);
+  }
+};
