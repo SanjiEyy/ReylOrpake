@@ -1,5 +1,5 @@
 module.exports.config = {  
-  name: "shotiv",  
+  name: "shoti",  
   version: "1.0.0",  
   credits: "libyzxy0",  
   description: "Generate random TikTok girl videos",  
