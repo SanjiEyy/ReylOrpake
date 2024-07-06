@@ -11,11 +11,18 @@ const botJoinGifLink = 'https://imgur.com/a/J13ytto'; // Replace with actual GIF
 
 module.exports.config = {
   name: 'joinnoti',
+  eventType: ['log:subscribe', 'log:subscribe_buddy', 'message'],
   version: '1.0.0',
   description: 'Handles join notifications, greetings, and nickname changes.',
   commandCategory: 'system',
   usages: '',
   cooldowns: 5,
+  dependencies: {
+    fs: '',
+    axios: '',
+    'moment-timezone': '',
+    'facebook-chat-api': '',
+  },
 };
 
 // Function to fetch profile picture URL from API or use default if not available
