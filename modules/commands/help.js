@@ -18,7 +18,7 @@ module.exports.config = {
 
 module.exports.languages = {
     "en": {
-        "moduleInfo": "「 %1 」\n%2\n\n❯ Usage: %3\n❯ Category: %4\n❯ Waiting time: %5 seconds(s)\n❯ Permission: %6\n\n» Module code by %7 «",
+        "moduleInfo": "「 %1 」\n%2\n\n❯ Usage: %3\n❯ Category: %4\n❯ Cooldown: %5 seconds(s)\n❯ Permission: %6\n\n» Module code by %7 «",
         "helpList": '[ There are %1 commands on this bot, Use: "%2help nameCommand" to know how to use! ]',
         "user": "User",
         "adminGroup": "Admin group",
@@ -54,9 +54,22 @@ const codFacts = [
     "The franchise has a loyal fan base and competitive esports scene."
 ];
 
+const sciFiFacts = [
+    "The term 'robot' originated from the 1920 Czech play 'R.U.R.' (Rossum's Universal Robots).",
+    "'Blade Runner' was adapted from Philip K. Dick's novel 'Do Androids Dream of Electric Sheep?'.",
+    "The Millennium Falcon set for 'Star Wars' was built using airplane scrap parts.",
+    "The voice of E.T. in 'E.T. the Extra-Terrestrial' was created by combining recordings of raccoons, otters, and horses.",
+    "'The Matrix' code is actually made up of Japanese sushi recipes.",
+    "The light sabers in 'Star Wars' are made from camera flash handles.",
+    "The inspiration for the look of the Xenomorph in 'Alien' came from H.R. Giger's painting 'Necronom IV'.",
+    "'Avatar' was originally planned to be released in 1999 but was postponed due to the technology not being advanced enough.",
+    "The 1982 film 'Tron' was one of the first to use extensive computer-generated imagery (CGI).",
+    "The iconic 'I am your father' line from 'Star Wars: Episode V - The Empire Strikes Back' was kept a secret from the cast until filming."
+];
+
 function getRandomFact() {
-    const facts = [...minecraftFacts, ...codFacts];
-    return facts[Math.floor(Math.random() * facts.length)];
+    const allFacts = [...minecraftFacts, ...codFacts, ...sciFiFacts];
+    return allFacts[Math.floor(Math.random() * allFacts.length)];
 }
 
 function getCurrentDateTime() {
@@ -83,7 +96,7 @@ module.exports.handleEvent = function ({ api, event, getText }) {
     const day = getCurrentDay();
 
     return api.sendMessage(
-        getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, ((command.config.hasPermssion == 0) ? getText("user") : (command.config.hasPermssion == 1) ? getText("adminGroup") : getText("adminBot")), command.config.credits) + 
+        getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, getPermissionText(command.config.hasPermssion, getText), command.config.credits) + 
         `\n\n${getText("randomFact", randomFact)}\n\n${getText("dateTime", dateTime, day)}`, 
         threadID, 
         messageID
@@ -109,18 +122,19 @@ module.exports.run = function({ api, event, args, getText }) {
         let i = 0;
         let msg = "";
 
-        for (var [name, value] of (commands)) {
-            name += ``;
+        for (var [name, value] of commands) {
             arrayInfo.push(name);
         }
 
-        arrayInfo.sort((a, b) => a.data - b.data);
+        arrayInfo.sort();
 
         const startSlice = numberOfOnePage * page - numberOfOnePage;
         i = startSlice;
         const returnArray = arrayInfo.slice(startSlice, startSlice + numberOfOnePage);
 
-        for (let item of returnArray) msg += `├─🆓 | ${prefix}${item}\n│\n├─────────────⟡\n`;
+        for (let item of returnArray) {
+            msg += `├─${getCommandMarker(commands.get(item).config.hasPermssion)} | ${prefix}${item}\n│\n├─────────────⟡\n`;
+        }
 
         const siu = `📍| 𝗔𝗟𝗟 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦\n\n${msg}├─⚙ Total Pages: ${page}/${Math.ceil(arrayInfo.length / numberOfOnePage)}\n│ 👑 Made with by hung sai shing\n│ 👑Bot admin by hung sai shing\n╰───────────────⟡`;
 
@@ -133,9 +147,34 @@ module.exports.run = function({ api, event, args, getText }) {
     }
 
     return api.sendMessage(
-        getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, ((command.config.hasPermssion == 0) ? getText("user") : (command.config.hasPermssion == 1) ? getText("adminGroup") : getText("adminBot")), command.config.credits) + 
+        getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, getPermissionText(command.config.hasPermssion, getText), command.config.credits) + 
         `\n\n${getText("randomFact", randomFact)}\n\n${getText("dateTime", dateTime, day)}`, 
         threadID, 
         messageID
     );
 };
+
+function getPermissionText(permissionLevel, getText) {
+    switch(permissionLevel) {
+        case 0:
+            return getText("user");
+        case 1:
+            return getText("adminGroup");
+        case 2:
+            return getText("adminBot");
+        default:
+            return getText("user");
+    }
+}
+
+function getCommandMarker(permissionLevel) {
+    switch(permissionLevel) {
+        case 0:
+            return "🟩";
+        case 1:
+        case 2:
+            return "👑";
+        default:
+            return "🟩";
+    }
+}
