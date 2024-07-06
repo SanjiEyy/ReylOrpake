@@ -120,7 +120,7 @@ module.exports.run = function({ api, event, args, getText }) {
         i = startSlice;
         const returnArray = arrayInfo.slice(startSlice, startSlice + numberOfOnePage);
 
-        for (let item of returnArray) msg += `├─🆓 | ${prefix}${item}\n│    No description available\n├─────────────⟡\n`;
+        for (let item of returnArray) msg += `├─🆓 | ${prefix}${item}\n│\n├─────────────⟡\n`;
 
         const siu = `📍| 𝗔𝗟𝗟 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦\n\n${msg}├─⚙ Total Pages: ${page}/${Math.ceil(arrayInfo.length / numberOfOnePage)}\n│ 👑 Made with by hung sai shing\n│ 👑Bot admin by hung sai shing\n╰───────────────⟡`;
 
