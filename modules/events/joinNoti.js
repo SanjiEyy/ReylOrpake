@@ -1,83 +1,137 @@
+const fs = require('fs');
+const axios = require('axios');
+const { MessageAttachment } = require('facebook-chat-api');
+const moment = require('moment-timezone');
+const { join } = require('path');
+
+// Configuration setup
+const cacheDir = join(__dirname, 'cache/');
+const joinApiUrl = 'https://joshweb.click/canvas/welcome';
+const botJoinGifLink = 'https://imgur.com/a/J13ytto'; // Replace with actual GIF link
+
 module.exports.config = {
-	name: "joinNoti",
-	eventType: ["log:subscribe"],
-	version: "1.0.1",
-	credits: "MrTomXxX",
-	description: "Notify bot or group member with random gif/photo/video",
-	dependencies: {
-		"fs-extra": "",
-		"path": ""
-	}
+  name: 'joinnoti',
+  version: '1.0.0',
+  description: 'Handles join notifications, greetings, and nickname changes.',
+  commandCategory: 'system',
+  usages: '',
+  cooldowns: 5,
 };
 
-module.exports.onLoad = function () {
-		const { existsSync, mkdirSync } = global.nodemodule["fs-extra"];
-		const { join } = global.nodemodule["path"];
-
-	const path = join(__dirname, "cache", "joinGif");
-	if (existsSync(path)) mkdirSync(path, { recursive: true });	
-
-	const path2 = join(__dirname, "cache", "joinGif", "randomgif");
-		if (!existsSync(path2)) mkdirSync(path2, { recursive: true });
-
-		return;
+// Function to fetch profile picture URL from API or use default if not available
+async function fetchProfilePic(userId) {
+  // Replace with your logic to fetch profile picture URL
+  return `https://graph.facebook.com/${userId}/picture?type=large`;
 }
 
+// Function to generate and cache the welcome image
+async function generateWelcomeImage(name, groupName, groupIcon, memberCount, uid, background) {
+  try {
+    const response = await axios.get(joinApiUrl, {
+      params: {
+        name,
+        groupname: groupName,
+        groupicon: groupIcon,
+        member: memberCount,
+        uid,
+        background,
+      },
+      responseType: 'arraybuffer',
+    });
 
-module.exports.run = async function({ api, event, Users, Threads }) {
-		const { join } = global.nodemodule["path"];
-	const { threadID } = event;
-	if (event.logMessageData.addedParticipants.some(i => i.userFbId == api.getCurrentUserID())) {
-		api.changeNickname(`» ${global.config.PREFIX} « → ${(!global.config.BOTNAME) ? "👾hungshyshing👾" : global.config.BOTNAME}`, threadID, api.getCurrentUserID());
-		return api.sendMessage(`\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n${global.config.BOTNAME} has connected successfully\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nHOW TO USE?? TYPE\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n${global.config.PREFIX}help to see all commands\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nINFO ABOUT OWNER\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nNAME IS ${global.config.OWNER}\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nFB IS ${global.config.FACEBOOK}\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nENJOY\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n`, threadID);
-	}
-	else {
-		try {
-			const { createReadStream, existsSync, mkdirSync, readdirSync } = global.nodemodule["fs-extra"];
-				const moment = require("moment-timezone");
-	const time = moment.tz("Asia/Manila").format("DD/MM/YYYY || HH:mm:s");
-	const hours = moment.tz("Asia/Manila").format("HH");
-			let { threadName, participantIDs } = await api.getThreadInfo(threadID);
-			const threadData = global.data.threadData.get(parseInt(threadID)) || {};
-			const path = join(__dirname, "cache", "joimp4");
-			const pathGif = join(path, `welcome.gif`);
+    // Save the generated image to cache
+    const imagePath = join(cacheDir, `joinGif_${uid}.jpg`);
+    fs.writeFileSync(imagePath, Buffer.from(response.data), 'binary');
+    return imagePath;
+  } catch (error) {
+    console.error('Error generating welcome image:', error);
+    return null;
+  }
+}
 
-			var mentions = [], nameArray = [], memLength = [], i = 0;
+// Function to handle nickname changes and issue warnings
+function handleNicknameChange(api, event) {
+  const { threadID, senderID, message } = event;
+  const botNicknameRegex = new RegExp(`»\\s*${global.config.PREFIX}\\s*«`, 'i');
+  const expectedNickname = `»${global.config.BOTNAME}«`;
 
-			for (id in event.logMessageData.addedParticipants) {
-				const userName = event.logMessageData.addedParticipants[id].fullName;
-				nameArray.push(userName);
-				mentions.push({ tag: userName, id });
-				memLength.push(participantIDs.length - i++);
-			}
-			memLength.sort((a, b) => a - b);
+  if (message && message.match(botNicknameRegex)) {
+    const currentNickname = message.match(botNicknameRegex)[0];
+    if (currentNickname.toLowerCase() !== expectedNickname.toLowerCase()) {
+      // Warn the user
+      api.sendMessage(`${global.config.BOTNAME} nickname is managed and cannot be changed. Your attempt has been logged.`, threadID);
+      
+      // Example: Implement a warning system and ban logic
+      // This is a simplified example
+      // You should implement a more robust warning system
+      let warnings = parseInt(fs.readFileSync(join(__dirname, `warnings/${senderID}.txt`), 'utf-8')) || 0;
+      warnings++;
+      fs.writeFileSync(join(__dirname, `warnings/${senderID}.txt`), warnings.toString());
 
-			(typeof threadData.customJoin == "undefined") ? msg = "hello senpai {name}\n\nwelcome to the {threadName}\n\nyou are the {soThanhVien}th member\n\n Time joined is {time}\n\nhave a nice {session} senpai📛 ": msg = threadData.customJoin;
-			msg = msg
-								.replace(/\{name}/g, nameArray.join(', '))
-								.replace(/\{type}/g, (memLength.length > 1) ? '𝙎𝙪𝙣𝙤' : '𝙏𝙪𝙢')
-								.replace(/\{soThanhVien}/g, memLength.join(', '))
-								.replace(/\{threadName}/g, threadName)
-								.replace(/\{session}/g, hours <= 10 ? "𝙈𝙤𝙧𝙣𝙞𝙣𝙜" : 
-		hours > 10 && hours <= 12 ? "𝘼𝙛𝙩𝙚𝙧𝙉𝙤𝙤𝙣" :
-		hours > 12 && hours <= 18 ? "𝙀𝙫𝙚𝙣𝙞𝙣𝙜" : "𝙉𝙞𝙜𝙝𝙩")
-								.replace(/\{time}/g, time);  
+      if (warnings >= 3) {
+        // Ban logic
+        // Example: api.removeUserFromGroup(threadID, senderID);
+        api.sendMessage(`${global.config.BOTNAME} nickname violation: You have been banned from using the bot.`, threadID);
+      }
+    }
+  }
+}
 
+// Function to handle user join events
+async function handleUserJoin(api, event) {
+  const { threadID, senderID } = event;
 
+  try {
+    const threadInfo = await api.getThreadInfo(threadID);
+    const { name: threadName, participantIDs } = threadInfo;
+    const memberCount = participantIDs.length;
 
-			if (existsSync(path)) mkdirSync(path, { recursive: true });
+    // Fetch user's profile picture
+    const profilePicUrl = await fetchProfilePic(senderID);
 
-			const randomPath = readdirSync(join(__dirname, "cache", "joinGif", "randomgif"));
+    // Generate welcome image and send message
+    const welcomeImage = await generateWelcomeImage(global.config.BOTNAME, threadName, profilePicUrl, memberCount, senderID, 'https://i.ibb.co/4YBNyvP/images-76.jpg');
+    if (welcomeImage) {
+      api.sendMessage({
+        body: `${senderID} has joined the ${threadName}. You are the ${memberCount}th member.\n\nTime and date joined: ${moment().tz('Asia/Manila').format('dddd, MMMM D, YYYY [at] HH:mm:ss')}`,
+        attachment: new MessageAttachment(welcomeImage),
+      }, threadID);
+    }
+  } catch (error) {
+    console.error('Error handling user join event:', error);
+  }
+}
 
-			if (existsSync(pathGif)) formPush = { body: msg, attachment: createReadStream(pathGif), mentions }
-			else if (randomPath.length != 0) {
-				const pathRandom = join(__dirname, "cache", "joinGif", "randomgif", `${randomPath[Math.floor(Math.random() * randomPath.length)]}`);
-				formPush = { body: msg, attachment: createReadStream(pathRandom), mentions }
-			}
-			else formPush = { body: msg, mentions }
+// Function to handle bot join event
+function handleBotJoin(api, event) {
+  const { threadID } = event;
 
-			return api.sendMessage(formPush, threadID);
+  // Send a specific greeting message with a GIF link
+  api.sendMessage({
+    body: `${global.config.BOTNAME} has connected to the ${threadID}. Time and date joined: ${moment().tz('Asia/Manila').format('dddd, MMMM D, YYYY [at] HH:mm:ss')}`,
+    attachment: new MessageAttachment(botJoinGifLink),
+  }, threadID);
+}
 
-		} catch (e) { return console.log(e) };
-	}
-											 }
+module.exports.handleEvent = async function({ api, event }) {
+  const { type, logMessageType } = event;
+
+  // Handle user join events
+  if (type === 'event' && logMessageType === 'log:subscribe') {
+    await handleUserJoin(api, event);
+  }
+
+  // Handle bot join event
+  if (type === 'event' && logMessageType === 'log:subscribe_buddy') {
+    handleBotJoin(api, event);
+  }
+
+  // Handle nickname changes
+  if (type === 'message' && event.isGroup) {
+    handleNicknameChange(api, event);
+  }
+};
+
+module.exports.run = function({ api, event, args }) {
+  // This command doesn't require any run logic since it's event-driven
+};
