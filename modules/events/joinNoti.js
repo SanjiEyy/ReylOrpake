@@ -7,7 +7,7 @@ const moment = require("moment-timezone");
 module.exports.config = {
     name: "joinNoti",
     eventType: ["log:subscribe"],
-    version: "1.0.3",
+    version: "1.0.4",
     credits: "MrTomXxX",
     description: "Notify bot or group member with random gif/photo/video",
     dependencies: {
@@ -35,13 +35,16 @@ module.exports.run = async function ({ api, event, Users, Threads }) {
 
     if (event.logMessageData.addedParticipants.some(i => i.userFbId == api.getCurrentUserID())) {
         api.changeNickname(`» ${global.config.PREFIX} « → ${(!global.config.BOTNAME) ? "👾hungshyshing👾" : global.config.BOTNAME}`, threadID, api.getCurrentUserID());
-        return api.sendMessage(`\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n${global.config.BOTNAME} has connected successfully\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nHOW TO USE?? TYPE\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n${global.config.PREFIX}help to see all commands\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nINFO ABOUT OWNER\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nNAME IS ${global.config.OWNER}\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nFB IS ${global.config.FACEBOOK}\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nENJOY\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n`, threadID);
+        const time = moment.tz("Asia/Manila").format("DD/MM/YYYY || HH:mm:ss");
+        const dayOfWeek = moment.tz("Asia/Manila").format("dddd");
+        const threadName = event.logMessageData.threadName || "Unknown Thread";
+        return api.sendMessage(`\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n${global.config.BOTNAME} has connected successfully\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nHOW TO USE?? TYPE\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n${global.config.PREFIX}help to see all commands\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nINFO ABOUT OWNER\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nNAME IS ${global.config.OWNER}\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nFB IS ${global.config.FACEBOOK}\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\nENJOY\n●▬▬▬▬▬๑⇩⇩๑▬▬▬▬▬●\n\nBot joined at:\nTime: ${time}\nDay: ${dayOfWeek}\nThread Name: ${threadName}`, threadID);
     } else {
         try {
             const { createReadStream, existsSync, mkdirSync, readdirSync } = global.nodemodule["fs-extra"];
             const moment = require("moment-timezone");
 
-            const time = moment.tz("Asia/Manila").format("DD/MM/YYYY || HH:mm:s");
+            const time = moment.tz("Asia/Manila").format("DD/MM/YYYY || HH:mm:ss");
             const dayOfWeek = moment.tz("Asia/Manila").format("dddd");
             const hours = moment.tz("Asia/Manila").format("HH");
 
