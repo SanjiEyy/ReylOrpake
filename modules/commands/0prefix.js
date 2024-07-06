@@ -50,7 +50,7 @@ module.exports.handleEvent = function({ api, event, client, __GLOBAL }) {
     ];
     var randomFact = facts[Math.floor(Math.random() * facts.length)];
     var msg = {
-      body: `═══════════════════════════════\n${global.config.BOTNAME}\n═══════════════════════════════\n\n➤ Systems Prefix:  『 ! 』\n   ➤ Chat Box Prefix: 『 ! 』\n\n═══════════════════════════════\n🗓 Date and Time:\n${days}, ${gio}\n═══════════════════════════════\n\nRandom Game Fact: ${randomFact}\n\n═══════════════════════════════\n🖥 Socials:\n        ▶ YouTube:\n${global.config.FACEBOOK}\n═══════════════════════════════\n`,
+      body: `✾══━━───✷꥟✷───━━══✾\n${global.config.BOTNAME}\n✾══━━───✷꥟✷───━━══✾\n\n➤ Systems Prefix:  『 ! 』\n   ➤ Chat Box Prefix: 『 ! 』\n\n✾══━━───✷꥟✷───━━══✾\n🗓 Date and Time:\n${days}, ${gio}\n✾══━━───✷꥟✷───━━══✾\n\nRandom Game Fact: ${randomFact}\n\n✾══━━───✷꥟✷───━━══✾\n🖥 Socials:\n        ▶ YouTube:\n${global.config.FACEBOOK}\n✾══━━───✷꥟✷───━━══✾\n`,
     };
     api.sendMessage(msg, threadID, messageID);
   }
