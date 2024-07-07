@@ -1,50 +1,49 @@
 const fs = require('fs');
-const { join } = require('path');
 const moment = require('moment-timezone');
 
 module.exports.config = {
     name: "rantwall",
     version: "1.0.0",
     credits: "YourName",
-    description: "Allow users to confess anonymously or tag themselves with messages displayed on a rant wall.",
-    commandCategory: "social", // Adjust the category as needed
-    usages: ["!rantwall [confession] [name/anonymous] [confessor name] [timezone] [datetime] [days] - Post a confession."],
-    cooldowns: 10, // Adjust cooldown as per your preference
+    description: "Post a confession anonymously with a custom name.",
+    commandCategory: "fun",
+    usages: ["!rantwall [name/anonymous] [confessname] [message] - Post a confession anonymously with a custom name."],
+    cooldowns: 5,
 };
 
 module.exports.run = async function({ api, event, args }) {
     const { threadID, messageID, senderID } = event;
-    const [confession, confessorType, confessorNameOrAnonymous, timezoneName, datetime, days] = args;
 
-    if (!confession || !confessorType || !confessorNameOrAnonymous || !timezoneName || !datetime || !days) {
-        api.sendMessage("Please provide all required parameters: confession, name/anonymous, confessor name, timezone, datetime, days.", threadID, messageID);
+    // Ensure a name, confessname, and confession are provided
+    if (args.length < 3) {
+        api.sendMessage("Please provide 'name' or 'anonymous', a confess name, and a confession message to post.", threadID, messageID);
         return;
     }
 
+    // Extract name/anonymous, confessname, and confession from args
+    const nameOrAnonymous = args[0].toLowerCase();
+    const confessname = args[1];
+    const confession = args.slice(2).join(" ");
+    
+    // Determine the sender's name or anonymous
+    const senderName = nameOrAnonymous === "anonymous" ? "Anonymous" : nameOrAnonymous;
+    
     try {
-        // Determine if the confessor should be anonymous or tagged
-        let confessorText = "";
-        if (confessorType.toLowerCase() === "anonymous") {
-            confessorText = "Anonymous";
-        } else {
-            confessorText = `Confessor: ${confessorNameOrAnonymous}`;
-        }
+        // Create a timestamp with date, time, and day
+        const timestamp = moment.tz("Asia/Manila").format('YYYY-MM-DD HH:mm:ss (dddd)');
 
-        // Format date and time in the specified timezone
-        const postDateTime = moment.tz(datetime, timezoneName).format('YYYY-MM-DD HH:mm:ss');
-
-        // Construct the message to be posted
-        const messageToPost = `Confession: ${confession}\n${confessorText}\nPost Date: ${postDateTime}\nDays: ${days}`;
-
-        // Simulate posting to a rant wall (replace with your actual posting logic)
-        console.log("Posting confession:", messageToPost);
+        // Construct the confession message
+        const confessionMessage = `${senderName}: ${confession} for anonymous or ${confessname}. Time posted: ${timestamp}`;
 
         // Example: Save the confession to a file (adjust as per your storage needs)
-        const filePath = join(__dirname, 'confessions.txt');
-        fs.appendFileSync(filePath, `${messageToPost}\n`);
+        const filePath = 'confessions.txt';
+        fs.appendFileSync(filePath, `${confessionMessage}\n\n`);
 
-        // Send confirmation message
-        api.sendMessage("Your confession has been posted on the rant wall.", threadID, messageID);
+        // Post the confession to the thread
+        api.sendMessage(confessionMessage, threadID);
+
+        // Confirm to the sender that their confession was posted
+        api.sendMessage("Your confession has been posted.", threadID, messageID);
     } catch (error) {
         console.error("Error posting confession:", error);
         api.sendMessage(`An error occurred: ${error.message}`, threadID, messageID);
