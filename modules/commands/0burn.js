@@ -1,70 +1,81 @@
 const { createCanvas, loadImage } = require('canvas');
 const { join } = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
+const axios = require('axios');
 
 module.exports.config = {
     name: "burn",
     version: "1.0.0",
     credits: "YourName",
-    description: "Superimpose the sender's or tagged person's image on SpongeBob's paper.",
+    description: "Burn someone's picture on the paper Spongebob is holding.",
     commandCategory: "fun",
-    usages: ["!burn - Superimpose the sender's or tagged person's image on SpongeBob's paper."],
+    usages: ["!burn @mention - Burn the mentioned user's picture."],
+    cooldowns: 10,
+    dependencies: {
+        "fs-extra": "",
+        "path": "",
+        "axios": ""
+    }
 };
 
-module.exports.run = async function({ api, event, args }) {
+module.exports.run = async function({ api, event, Users }) {
     const { threadID, messageID, senderID, mentions } = event;
 
-    // Check if there's a tagged person in the message
-    const taggedUserID = Object.keys(mentions).length > 0 ? Object.keys(mentions)[0] : senderID;
-
-    // Function to create the burned image
-    const createBurnedImage = async (userID) => {
-        try {
-            // Load SpongeBob's paper image and the user's profile picture
-            const spongebobPaper = await loadImage('https://i.postimg.cc/ZKjhsnYJ/images-1.jpg');
-            const userImage = await loadImage(`https://graph.facebook.com/${userID}/picture?type=large`);
-
-            // Create a canvas matching SpongeBob's paper dimensions
-            const canvas = createCanvas(spongebobPaper.width, spongebobPaper.height);
-            const ctx = canvas.getContext('2d');
-
-            // Draw SpongeBob's paper image on the canvas
-            ctx.drawImage(spongebobPaper, 0, 0, canvas.width, canvas.height);
-
-            // Resize and position the user's image on SpongeBob's paper
-            const imageSize = 200; // Adjust size as needed
-            const x = 100; // Adjust position as needed
-            const y = 300; // Adjust position as needed
-            ctx.drawImage(userImage, x, y, imageSize, imageSize);
-
-            // Save the modified canvas to a file
-            const filePath = join(__dirname, 'burned_image.png');
-            const out = fs.createWriteStream(filePath);
-            const stream = canvas.createPNGStream();
-            stream.pipe(out);
-
-            return new Promise((resolve, reject) => {
-                out.on('finish', () => resolve(filePath));
-                out.on('error', (err) => reject(err));
-            });
-        } catch (error) {
-            throw new Error(`Error creating burned image: ${error.message}`);
-        }
-    };
+    if (Object.keys(mentions).length === 0) {
+        api.sendMessage("Please tag someone to burn their picture.", threadID, messageID);
+        return;
+    }
 
     try {
-        const filePath = await createBurnedImage(taggedUserID);
+        const taggedUserID = Object.keys(mentions)[0];
+        const taggedUserName = mentions[taggedUserID].replace(/@/g, "");
+        const senderName = await Users.getNameUser(senderID);
 
-        // Send the modified image as an attachment
-        api.sendMessage({
-            body: "Here's your burned image!",
-            attachment: fs.createReadStream(filePath)
-        }, threadID, messageID);
+        // Load images
+        const baseImageUrl = 'https://i.postimg.cc/ZKjhsnYJ/images-1.jpg';
+        const response = await axios.get(baseImageUrl, { responseType: 'arraybuffer' });
+        const baseImageBuffer = Buffer.from(response.data, 'binary');
+        const baseImage = await loadImage(baseImageBuffer);
 
-        // Clean up: Delete the temporary image file
-        fs.unlinkSync(filePath);
+        const profileImageUrl = `https://graph.facebook.com/${taggedUserID}/picture?type=large`;
+        const profileResponse = await axios.get(profileImageUrl, { responseType: 'arraybuffer' });
+        const profileImageBuffer = Buffer.from(profileResponse.data, 'binary');
+        const profileImage = await loadImage(profileImageBuffer);
+
+        // Create canvas
+        const canvas = createCanvas(baseImage.width, baseImage.height);
+        const ctx = canvas.getContext('2d');
+
+        // Draw base image
+        ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+        // Draw profile image on the paper
+        const paperX = 200; // Adjust x position
+        const paperY = 300; // Adjust y position
+        const paperWidth = 150; // Adjust width
+        const paperHeight = 150; // Adjust height
+        ctx.drawImage(profileImage, paperX, paperY, paperWidth, paperHeight);
+
+        // Add text
+        ctx.font = '20px Arial';
+        ctx.fillStyle = '#000';
+        ctx.fillText(`${senderName} cocks ${taggedUserName}`, 50, canvas.height - 20);
+
+        // Save image
+        const filePath = join(__dirname, 'cache', 'burned_image.png');
+        const out = fs.createWriteStream(filePath);
+        const stream = canvas.createPNGStream();
+        stream.pipe(out);
+
+        out.on('finish', () => {
+            api.sendMessage({
+                body: '',
+                attachment: fs.createReadStream(filePath)
+            }, threadID, () => fs.unlinkSync(filePath), messageID);
+        });
+
     } catch (error) {
-        console.error("Error creating burned image:", error);
+        console.error("Error creating burn image:", error);
         api.sendMessage(`An error occurred: ${error.message}`, threadID, messageID);
     }
 };
