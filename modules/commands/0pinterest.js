@@ -20,11 +20,11 @@ module.exports.run = async function({ api, event, args }) {
 
     try {
         const response = await axios.get(`https://joshweb.click/api/pinterest?q=${encodeURIComponent(query)}`);
-        
-        if (response.data.status === 200 && response.data.result) {
+
+        if (response.data.status === 200 && response.data.result.length > 0) {
             const images = response.data.result;
             let message = `Here are the top images related to "${query}":\n\n`;
-            
+
             images.forEach((image, index) => {
                 message += `${index + 1}. ${image.description}\n${image.url}\n\n`;
             });
