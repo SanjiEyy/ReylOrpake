@@ -50,10 +50,10 @@ module.exports.run = async function({ api, event, Users }) {
         ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
 
         // Draw profile image on the paper
-        const paperX = 200; // Adjust x position
+        const paperX = -200; // Adjust x position
         const paperY = 300; // Adjust y position
-        const paperWidth = 150; // Adjust width
-        const paperHeight = 150; // Adjust height
+        const paperWidth = 50; // Adjust width
+        const paperHeight = 50; // Adjust height
         ctx.drawImage(profileImage, paperX, paperY, paperWidth, paperHeight);
 
         // Add text
