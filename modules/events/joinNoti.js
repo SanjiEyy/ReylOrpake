@@ -1,8 +1,3 @@
-const { createCanvas, loadImage } = require('canvas');
-const { join } = require('path');
-const fs = require('fs-extra');
-const moment = require('moment-timezone');
-
 module.exports.config = {
     name: "joinNoti",
     eventType: ["log:subscribe"],
@@ -10,8 +5,10 @@ module.exports.config = {
     credits: "MrTomXxX",
     description: "Notify bot or group member with random gif/photo/video",
     dependencies: {
+        "canvas": "",
+        "path": "",
         "fs-extra": "",
-        "path": ""
+        "moment-timezone": ""
     }
 };
 
@@ -27,6 +24,11 @@ module.exports.onLoad = function () {
 };
 
 module.exports.run = async function({ api, event, Users, Threads }) {
+    const { createCanvas, loadImage } = global.nodemodule["canvas"];
+    const { join } = global.nodemodule["path"];
+    const fs = global.nodemodule["fs-extra"];
+    const moment = global.nodemodule["moment-timezone"];
+
     const { threadID } = event;
 
     if (event.logMessageData.addedParticipants.some(i => i.userFbId == api.getCurrentUserID())) {
@@ -45,7 +47,7 @@ module.exports.run = async function({ api, event, Users, Threads }) {
         );
     } else {
         try {
-            const { createReadStream, existsSync, mkdirSync, readdirSync } = global.nodemodule["fs-extra"];
+            const { createReadStream, existsSync, mkdirSync, readdirSync } = fs;
             const time = moment.tz("Asia/Manila").format("DD/MM/YYYY || HH:mm:ss");
             const day = moment.tz("Asia/Manila").format("dddd");
             const hours = moment.tz("Asia/Manila").format("HH");
