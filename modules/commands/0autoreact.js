@@ -1,48 +1,65 @@
+const fs = require('fs');
+const pathFile = __dirname + '/autoreact/autoreact.txt';
+
 const emojiList = [
     '😄', '😆', '😂', '🤣', '😊', '😍', '🥰', '😘', '😜', '😎',
     '🤓', '😇', '🥳', '🤩', '🥺', '😋', '😛', '🤪', '😉', '🤗',
     '🤠', '🤡', '🥴', '😵', '🤯', '🤥', '🤫', '🤭', '🧐', '🤨',
     '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤐', '🤔', '🤫',
-    '🤭', '🤥', '🤡', '🥶', '😷', '🤒', '🤕', '🤢', '🤮', '🤧'
+    '🤭', '🤥', '🤡', '🥶', '😷', '🤒', '🤕', '🤢', '🤮', '🤧',
+    '👽', '👾', '💀', '☠️', '👻', '🤖', '🎃', '😈', '👹', '👺',
+    '👿', '💩', '👻', '👽', '🤠', '🤡', '👺', '💀', '👻', '👽',
+    '👾', '☠️', '🤖', '🎃', '😈', '👹', '👿', '💩', '👻', '👽',
+    '🤠', '🤡', '👺', '💀', '👻', '👽', '👾', '☠️', '🤖', '🎃'
 ];
 
-let reacting = false;
+let autoReactEnabled = true;
 
 module.exports.config = {
     name: "autoreact",
     version: "1.0.0",
-    credits: "YourName",
-    description: "React with random emoji to sender's messages.",
-    commandCategory: "admin", // Adjust the category as needed
-    adminOnly: true, // Only admins can use this command
+    credits: "nayan",
+    description: "Enables or disables auto reactions to messages.",
+    commandCategory: "auto",
     usages: ["!autoreact awto on/off - Enable or disable autoreactions."],
+    cooldowns: 5,
+    dependencies: {
+        "fs": "",
+        "axios": ""
+    }
 };
 
-module.exports.run = function({ api, event, args }) {
-    const { threadID, senderID, messageID } = event;
+module.exports.run = async function({ api, event, args }) {
+    const { threadID } = event;
 
     if (!args[0] || (args[0] !== "awto" && args[0] !== "off")) {
-        api.sendMessage("Invalid usage. Please use `awto on` or `awto off`.", threadID);
-        return;
+        return api.sendMessage("Incorrect syntax. Use `awto on` or `awto off`.", threadID);
     }
 
     if (args[0] === "awto") {
-        reacting = true;
-        api.sendMessage("Autoreactions enabled.", threadID);
+        autoReactEnabled = true;
+        await saveStateToFile(true);
+        return api.sendMessage("Auto reactions enabled.", threadID);
     } else if (args[0] === "off") {
-        reacting = false;
-        api.sendMessage("Autoreactions disabled.", threadID);
+        autoReactEnabled = false;
+        await saveStateToFile(false);
+        return api.sendMessage("Auto reactions disabled.", threadID);
     }
+};
 
-    api.listen((err, event) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
+async function saveStateToFile(state) {
+    try {
+        await fs.writeFile(pathFile, String(state));
+    } catch (error) {
+        console.error('Error saving autoReact state:', error);
+    }
+}
 
-        if (reacting && event.senderID !== senderID && event.type === "message") {
-            const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
-            api.setMessageReaction(randomEmoji, messageID);
-        }
-    });
+module.exports.handleEvent = async function({ api, event }) {
+    const { threadID, senderID, messageID } = event;
+
+    if (autoReactEnabled && event.type === "message") {
+        const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+        api.setMessageReaction(randomEmoji, messageID);
+    }
 };
