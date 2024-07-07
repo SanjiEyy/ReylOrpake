@@ -1,12 +1,4 @@
-module.exports.config = {
-    name: "rizzbsy",
-    version: "1.0.0",
-    credits: "YourName",
-    description: "Tags someone and rizzes them with a playful message in Bisaya (Visayan).",
-    commandCategory: "fun",
-    usages: ["!rizz @mention - Rizzes the mentioned person with a playful message."],
-    cooldowns: 5,
-};
+const { getThreadInfo, getUserInfo } = require("facebook-chat-api");
 
 const rizzMessages = [
     "{mention}, ikaw ra gyud ang pahibalo kon unsaon pag-uwag og kalipay sa tawo! 😄",
@@ -41,16 +33,41 @@ const rizzMessages = [
     "{mention}, ikaw ang klase sa tawo nga nagpabilin sa atong pagtuo sa maayong mga butang sa kinabuhi. Salamat!"
 ];
 
-module.exports.run = function({ api, event, args }) {
-    const { threadID, senderID, mentions } = event;
-    const mention = Object.keys(mentions)[0]; // Get the first mentioned user's ID
+module.exports.config = {
+    name: "rizzbsy",
+    version: "1.0.0",
+    credits: "YourName",
+    description: "Tags someone and rizzes them with a playful message in Bisaya (Visayan).",
+    commandCategory: "fun",
+    usages: ["!rizz @mention - Rizzes the mentioned person with a playful message."],
+    cooldowns: 5,
+};
 
-    if (!mention) {
+module.exports.run = async function({ api, event, args }) {
+    const { threadID, senderID, mentions } = event;
+
+    // Check if a user is mentioned
+    if (!mentions || Object.keys(mentions).length === 0) {
         return api.sendMessage("Palihug tag-i og tawo aron i-rizz!", threadID);
     }
 
-    const randomMessage = rizzMessages[Math.floor(Math.random() * rizzMessages.length)];
-    const message = randomMessage.replace("{mention}", `[${mention.split("_")[0]}]`);
+    const mentionID = Object.keys(mentions)[0]; // Get the ID of the mentioned user
 
-    api.sendMessage(message, threadID);
+    try {
+        // Fetch user info to get their name
+        const userInfo = await getUserInfo(mentionID);
+        const mentionName = userInfo[mentionID].name;
+
+        // Select a random rizz message
+        const randomMessage = rizzMessages[Math.floor(Math.random() * rizzMessages.length)];
+
+        // Replace {mention} with the mentioned user's name
+        const message = randomMessage.replace("{mention}", mentionName);
+
+        // Send the rizz message
+        api.sendMessage(message, threadID);
+    } catch (error) {
+        console.error("Error fetching user info:", error);
+        api.sendMessage("Oops! Something went wrong while fetching user info.", threadID);
+    }
 };
