@@ -22,8 +22,8 @@ module.exports.run = async function({ api, event, args }) {
         // Fetch app data from the provided API endpoint
         const response = await axios.get(`https://joshweb.click/api/playstore?q=${encodeURIComponent(appName)}`);
 
-        if (response.data) {
-            const appInfo = response.data;
+        if (response.data.status === 200 && response.data.result) {
+            const appInfo = response.data.result;
             const message = `
             App Name: ${appInfo.title}
             Developer: ${appInfo.developer}
